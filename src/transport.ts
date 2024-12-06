@@ -8,6 +8,7 @@ import Daily, {
   DailyEventObjectRemoteParticipantsAudioLevel,
   DailyEventObjectSelectedDevicesUpdated,
   DailyEventObjectTrack,
+  DailyFactoryOptions,
   DailyParticipant,
 } from "@daily-co/daily-js";
 import {
@@ -27,15 +28,21 @@ export interface DailyTransportAuthBundle {
   token: string;
 }
 
+export interface DailyTransportConstructorOptions {
+  dailyFactoryOptions?: DailyFactoryOptions;
+}
+
 export class DailyTransport extends Transport {
   private declare _daily: DailyCall;
+  private _dailyFactoryOptions: DailyFactoryOptions;
   private _botId: string = "";
   private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
   private _selectedSpeaker: MediaDeviceInfo | Record<string, never> = {};
 
-  constructor() {
+  constructor({ dailyFactoryOptions = {} }: DailyTransportConstructorOptions = {}) {
     super();
+    this._dailyFactoryOptions = dailyFactoryOptions;
   }
 
   public initialize(
@@ -51,10 +58,12 @@ export class DailyTransport extends Transport {
     }
 
     this._daily = Daily.createCallObject({
-      startVideoOff: !(options.enableCam == true),
+      ...this._dailyFactoryOptions,
+      // Default is cam off
+      startVideoOff: options.enableCam != true,
+      // Default is mic on
       startAudioOff: options.enableMic == false,
       allowMultipleCallInstances: true,
-      dailyConfig: {},
     });
 
     this.attachEventListeners();
